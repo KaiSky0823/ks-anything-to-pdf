@@ -1,0 +1,137 @@
+/* 中文工作文档排版。颜色由 md_zh.sh --palette 选择，默认裸粉系。 */
+
+:root {
+  --paper:      #FCEADF;   /* 纸 */
+  --ink:        #2E1F26;   /* 正文墨色 */
+  --accent:     #E23E68;   /* 强调色：H3 竖线、em、H2 错版影 */
+  --accent2:    #7D8C2A;   /* 第二强调：H2 底色、代码块左线、列表符号 */
+  --muted:      #8A7A72;   /* 副标题 */
+  --muted2:     #5C4A44;   /* H4 */
+  --quote:      #7A6A62;   /* 引用文字 */
+  --quote-em:   #8A6A62;
+  --em:         #A8324F;   /* 行内强调（比 accent 沉一档） */
+  --code-bg:    #F6DFD4;
+  --pre-bg:     #F8E7DD;
+  --code-fg:    #4A3A34;
+  --pre-fg:     #3D2F2A;
+  --rule:       #E7CFC3;   /* 表格行线 */
+  --rule2:      #D9BCAE;   /* 表格末行线 / 引用左线 */
+  --rule3:      #E0C4B6;   /* hr */
+  --link:       #5C6B1F;
+  --link-line:  #B9C48F;
+}
+/* 用 unicode-range 只把数字挂到 Noto Serif SC 衬线体上，
+   中文和西文照常走无衬线 —— 这样表格里的数据自带一点份量，不用手工标记。 */
+@font-face {
+  font-family: 'DocumentDigit';
+  src: local('Noto Serif SC'), local('NotoSerifSC-Bold');
+  unicode-range: U+0030-0039;
+}
+
+@page {
+  size: A4;
+  margin: 15mm 14mm 16mm;
+  background: var(--paper);
+}
+
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+body {
+  font-family: 'DocumentDigit', "Noto Sans CJK SC", "PingFang SC", -apple-system, sans-serif;
+  font-size: 10pt;
+  line-height: 1.82;
+  color: var(--ink);
+  background: var(--paper);
+  max-width: none; margin: 0; padding: 0;
+  text-spacing-trim: space-all;   /* 中西文之间自动留隙，中英混排靠它 */
+}
+
+/* ── 标题 ───────────────────────────────────────────────
+   H2 用橄榄绿色块反白 + 桃红错版影 —— 这是首图色块的同一个手法，
+   全文最强的风格呼应就在这里。H3 用桃红竖线，轻一档。 */
+h1 {
+  font-size: 22pt; font-weight: 900; letter-spacing: -0.025em;
+  line-height: 1.32; margin: 0 0 3pt; color: var(--ink);
+}
+h1 + p { color: var(--muted); font-size: 9.5pt; margin: 0 0 4pt; }
+
+h2 {
+  display: table;                  /* 让底色只包住文字本身，不铺满整行 */
+  font-size: 12.5pt; font-weight: 900; letter-spacing: 0.01em;
+  color: var(--paper); background: var(--accent2);
+  padding: 3.5pt 11pt 4.5pt;
+  margin: 24pt 0 10pt;
+  box-shadow: 4px 4px 0 var(--accent);
+  break-after: avoid; page-break-after: avoid;
+}
+h3 {
+  font-size: 11pt; font-weight: 800; color: var(--ink);
+  margin: 16pt 0 6pt; padding-left: 9pt;
+  border-left: 3.5px solid var(--accent);
+  break-after: avoid; page-break-after: avoid;
+}
+h4 { font-size: 10.2pt; font-weight: 800; margin: 12pt 0 4pt; color: var(--muted2); }
+
+p { margin: 0 0 7pt; }
+strong { font-weight: 900; color: var(--ink); }
+em { font-style: normal; color: var(--em); }   /* 中文文档里斜体难看，换成桃红 */
+
+/* ── 表格：只留横线。表头一条墨线，行间用纸色系的浅线 ───── */
+table {
+  border-collapse: collapse; width: 100%;
+  font-size: 8.9pt; line-height: 1.62;
+  margin: 9pt 0 13pt;
+  /* 不给整张表 break-inside:avoid —— 装不下的表会被整体推到下一页，
+     留下半页空白。改为「行不拆断 + 跨页表头重复」，两全。 */
+}
+thead { display: table-header-group; }        /* 跨页时表头自动重复 */
+th {
+  text-align: left; font-weight: 900; color: var(--ink);
+  padding: 5pt 10pt 5pt 0;
+  border-bottom: 1.8px solid var(--ink);
+  white-space: nowrap;
+}
+td {
+  padding: 5.5pt 10pt 5.5pt 0; vertical-align: top;
+  border-bottom: 0.6px solid var(--rule);
+}
+tr { break-inside: avoid; page-break-inside: avoid; }
+tbody tr:last-child td { border-bottom: 1.2px solid var(--rule2); }
+table code { font-size: 8.2pt; }
+
+/* ── 代码：比纸色深一档 + 橄榄绿左边线 ─────────────────── */
+code {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 8.7pt;
+  background: var(--code-bg); padding: 1pt 4pt; border-radius: 2.5px;
+  color: var(--code-fg);
+}
+pre {
+  background: var(--pre-bg); border-left: 3.5px solid var(--accent2);
+  padding: 9pt 12pt; margin: 8pt 0 12pt;
+  border-radius: 0 3px 3px 0;
+  overflow-wrap: break-word; white-space: pre-wrap;
+  break-inside: avoid; page-break-inside: avoid;
+}
+pre code { background: none; padding: 0; font-size: 8.5pt; line-height: 1.66; color: var(--pre-fg); }
+
+/* ── 引用 ───────────────────────────────────────────── */
+blockquote {
+  margin: 8pt 0 12pt; padding: 3pt 0 3pt 12pt;
+  border-left: 2.5px solid var(--rule2);
+  color: var(--quote); font-size: 9.3pt;
+  break-inside: avoid; page-break-inside: avoid;
+}
+blockquote p { margin: 0 0 4pt; }
+blockquote em { font-style: normal; color: var(--quote-em); }
+
+ul, ol { margin: 6pt 0 10pt; padding-left: 17pt; }
+li { margin: 0 0 4pt; }
+li::marker { color: var(--accent2); }
+li > ul, li > ol { margin: 3pt 0 2pt; }
+
+hr { border: none; border-top: 0.9px solid var(--rule3); margin: 17pt 0; }
+
+a { color: var(--link); text-decoration: none; border-bottom: 0.5px solid var(--link-line); }
+
+p, li { orphans: 2; widows: 2; }

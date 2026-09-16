@@ -1,0 +1,55 @@
+/* ============================================================================
+   ks-anything-to-pdf · 通用打印基线 (print_base.css)
+   只放「安全、与具体类名无关」的通用规则。每个 HTML 都适用,不会破坏布局。
+   针对性的「卡片整块不跨页 / 每节新页 / flex·grid 降级」由 to_pdf.py 按
+   命令行参数 (--keep / --page-break-before / --flat) 动态追加,见 SKILL.md。
+   依据:HTML→PDF 地毯式调研(break-inside 双写 + print-color-adjust + 表头重复)。
+   ============================================================================ */
+
+@media print {
+
+  /* ① 保留所有背景色 / 背景图(最常见的「打印后背景丢失」根因) */
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* ② 阻止浏览器 Auto Dark Theme 反转颜色 */
+  :root { color-scheme: only light; }
+
+  /* ③ 打印里 backdrop-filter 无意义且易渲染异常,关掉 */
+  *, *::before, *::after {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* ④ 隐藏屏幕专属元素(导航 / 明确标注不打印的) */
+  nav, .no-print, .no-pdf, [data-no-print], [hidden] { display: none !important; }
+
+  /* ⑤ 标题不孤悬在页底(粘住其后内容) */
+  h1, h2, h3, h4, h5, h6 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* ⑥ 段落孤行 / 寡行控制(Chrome / WebKit 支持) */
+  p, li, blockquote { orphans: 3; widows: 3; }
+
+  /* ⑦ 通用「不可拆」容器整体不跨页(这些元素与类名无关,普遍安全) */
+  figure, pre, blockquote, img {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* ⑧ 图片限高,避免单图高于一页触发拆断 / 渲染中断 */
+  img { max-width: 100% !important; max-height: 92vh; height: auto; }
+
+  /* ⑨ 表格:表头每页重复 + 行不拆断 */
+  thead { display: table-header-group; }
+  tfoot { display: table-footer-group; }
+  tr, th, td {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

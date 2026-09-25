@@ -1,60 +1,69 @@
-# ks-anything-to-pdf
+# ks-anything-to-pdf · 什么都能转 PDF 📄
 
-把 HTML、Markdown、Office 文档、图片、电子书、LaTeX、Typst 或网页转成 PDF。复用现有转换工具，补充 HTML 分页控制、中文文档样式与转图验收。
+> *One thin dispatcher over the mature converters (Chrome, WeasyPrint, pandoc, LibreOffice, img2pdf, Calibre, Tectonic, Typst), plus "keep this block on one page" CSS and self-verification.*
 
-## 安装
+每次要出一份 PDF，都要重新想一遍：这个用 pandoc 还是 Chrome？中文字体为什么又是方块？卡片为什么被分页切成两半？转完了还得自己翻一遍看有没有排崩。
 
-Claude Code：
+这个 skill 把这些问题一次性收掉。
 
+## 🧩 它怎么做
+
+一层薄 dispatcher，按输入类型把活派给最合适的成熟工具，**自己不造轮子**：
+
+| 输入 | 引擎 |
+|---|---|
+| HTML、网页 | Chrome/Chromium 或 WeasyPrint |
+| Markdown 等文本 | pandoc + WeasyPrint、Typst 或 LaTeX |
+| 中文 Markdown（带样式） | pandoc + Chrome + 系统中文字体 |
+| Word、PPT、Excel | LibreOffice |
+| 图片、整个相册目录 | img2pdf（ImageMagick 回退） |
+| ePub、MOBI、AZW3 | Calibre |
+| LaTeX / Typst | Tectonic / Typst |
+| 合并 | qpdf |
+
+在此之上加了三样别人没有的：
+
+- 📐 **同块不跨页** —— `--keep ".card"` 自动注入打印 CSS，卡片、表格、代码块不再被分页拦腰切断
+- 🀄 **中文文档样式** —— `md_zh.sh` + `zh-doc.css`，两套配色（`nude` / `cream`），数字衬线、标题层级、页边距一次调好
+- 👀 **转图验收** —— 转完自动把前几页渲染成图放在 `_verify/`，你或 AI 看一眼就知道有没有排崩
+
+## 💬 你说什么，它给什么
+
+你说：「把这份 report.md 转成 PDF，卡片别跨页」
+
+它跑：
 ```bash
-git clone https://github.com/KaiSky0823/ks-anything-to-pdf.git ~/.claude/skills/ks-anything-to-pdf
+python3 scripts/to_pdf.py report.md -o report.pdf --keep ".card"
+```
+然后给你 PDF + 验收图。中文报告直接：
+```bash
+bash scripts/md_zh.sh report.md report.pdf --palette cream
 ```
 
-Codex：
+## ⚙️ 安装
 
 ```bash
+# Claude Code
+git clone https://github.com/KaiSky0823/ks-anything-to-pdf.git ~/.claude/skills/ks-anything-to-pdf
+# Codex
 git clone https://github.com/KaiSky0823/ks-anything-to-pdf.git ~/.agents/skills/ks-anything-to-pdf
 ```
 
-安装后重启客户端或刷新技能列表。也可直接克隆到其他目录，通过脚本使用。
+基础依赖 Python 3；只装你用得到的引擎（安装命令见 [cookbook](references/cookbook.md)）。工具通过 `PATH` 查找，Chrome 可用 `CHROME_BIN` 指定。中文装 Noto Sans CJK SC，数字衬线可选 Noto Serif SC。脚本**不会**自动安装依赖或改系统配置。
 
-## 依赖
-
-基础依赖 Python 3；中文排版脚本另需 Bash。只安装所用格式对应的引擎：
-
-| 输入／功能 | 工具 |
-|---|---|
-| HTML、网页 | Chrome/Chromium，或 WeasyPrint |
-| Markdown 等文本格式 | pandoc + WeasyPrint、Typst 或 LaTeX |
-| 中文 Markdown 样式 | pandoc + Chrome/Chromium + 系统中文字体 |
-| Word、PPT、Excel | LibreOffice |
-| 图片 | img2pdf；ImageMagick 可作兼容回退 |
-| ePub、MOBI、AZW3 | Calibre |
-| LaTeX / Typst | Tectonic / Typst |
-| PDF 合并 | qpdf |
-| 转图验收 | PyMuPDF，可选；缺失时跳过 |
-
-工具通过 `PATH` 查找；Chrome 也可通过 `CHROME_BIN` 指定可执行文件路径（不含参数）。macOS 会尝试常见应用路径。中文可安装 Noto Sans CJK SC；中文样式的数字衬线效果可选装 Noto Serif SC。缺字时先检查系统字体。
-
-安装命令和其他转换工具示例见 [cookbook](references/cookbook.md)。脚本不会自动安装依赖或修改系统配置。
-
-## 运行
-
-在克隆的仓库／技能目录运行：
+## 🛠️ 更多用法
 
 ```bash
-python3 scripts/to_pdf.py /path/to/report.md -o /path/to/report.pdf
-python3 scripts/to_pdf.py /path/to/report.html -o /path/to/report.pdf \
-  --keep ".card" --page-break-before ".chapter" --size A4
-bash scripts/md_zh.sh /path/to/report.md /path/to/report.pdf --palette cream
-python3 scripts/to_pdf.py /path/to/photos --merge -o /path/to/album.pdf
-python3 scripts/verify_pdf.py /path/to/report.pdf --pages 6
+python3 scripts/to_pdf.py report.html -o report.pdf --keep ".card" --page-break-before ".chapter" --size A4
+python3 scripts/to_pdf.py ./photos --merge -o album.pdf
+python3 scripts/verify_pdf.py report.pdf --pages 6
 ```
+`--engine weasyprint` 适合静态 HTML；`--no-verify` 跳过验收；批量转换不自动验收。转换可能覆盖同名输出，要留旧结果就换 `-o` 路径。完整选项见 `--help` 和 SKILL.md。
 
-中文配色支持 `nude` 和 `cream`。`--engine weasyprint` 适用于静态 HTML；`--no-verify` 跳过自动验收。完整选项见 `python3 scripts/to_pdf.py --help` 和 [SKILL.md](SKILL.md)。
+## 📖 来源
 
-生成的验收图位于输出目录下 `_verify/`。批量转换不会自动验收，应对需要检查的 PDF 单独运行验收脚本。转换可能覆盖同名输出；保留旧结果时使用新的 `-o` 路径。外部字体、图片、URL 和 Tectonic 首次下载宏包可能需要网络。
+由个人日常使用的 `anything-to-pdf` 整理发布。底层引擎全是第三方工具，本仓库不分发它们，也不含任何私人研究资料。
 
-## 来源与范围
+## License
 
-本仓库由个人使用的 `anything-to-pdf` 整理发布，保留较新版本中的 `md_zh.sh` 与 `zh-doc.css`。底层转换依赖上表中的第三方工具；没有把这些工具或未随包提供的本地研究资料作为仓库内容分发。
+MIT © 2026 KaiSky0823
